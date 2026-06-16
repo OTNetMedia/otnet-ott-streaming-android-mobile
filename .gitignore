@@ -1,0 +1,67 @@
+# Gradle
+.gradle/
+build/
+out/
+captures/
+.cxx/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+.navigation/
+proguard/
+local.properties
+
+# Environment / secrets — never commit anything with real keys
+*.env
+.env
+.env.*
+.env.local
+*.pem
+*.key
+*.keystore
+*.jks
+keystore.properties
+
+# Build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Native
+.externalNativeBuild/
+.cxx/
+
+# Logs
+*.log
+hs_err_pid*
+
+# IDE / editors
+.vscode/
+*.swp
+*.swo
+.history/
+
+# OS junk
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Test / coverage
+**/test-results/
+**/reports/
+coverage/
+
+# Claude / AI assistant artefacts
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.cursor/
+.aider*
+.continue/

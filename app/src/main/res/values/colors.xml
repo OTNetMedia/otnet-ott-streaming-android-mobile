@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="otnet_background">#FF0A101F</color>
+    <color name="otnet_card">#FF121830</color>
+    <color name="otnet_primary">#FF4D66FF</color>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">OTNet</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_browse">Browse</string>
+    <string name="action_play">Play</string>
+    <string name="action_my_list">My List</string>
+    <string name="action_retry">Retry</string>
+    <string name="state_loading">Loading…</string>
+    <string name="state_empty">Nothing to show yet.</string>
+    <string name="state_error_generic">Something went wrong.</string>
+</resources>
