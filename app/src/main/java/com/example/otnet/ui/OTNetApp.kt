@@ -65,14 +65,14 @@ fun OTNetApp() {
                     val id = entry.arguments?.getString("id").orEmpty()
                     ContentDetailScreen(
                         contentId = id,
-                        onPlay = { variantIndex -> nav.navigate("player/$id/$variantIndex") },
+                        onPlay = { mediaIndex -> nav.navigate("player/$id/$mediaIndex") },
                         onBack = { nav.popBackStack() },
                     )
                 }
-                composable("player/{id}/{variantIndex}") { entry ->
+                composable("player/{id}/{mediaIndex}") { entry ->
                     PlayerScreen(
                         contentId = entry.arguments?.getString("id").orEmpty(),
-                        variantIndex = entry.arguments?.getString("variantIndex")?.toIntOrNull() ?: 0,
+                        mediaIndex = entry.arguments?.getString("mediaIndex")?.toIntOrNull() ?: 0,
                         onClose = { nav.popBackStack() },
                     )
                 }

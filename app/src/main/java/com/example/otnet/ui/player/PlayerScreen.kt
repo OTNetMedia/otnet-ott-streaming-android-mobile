@@ -29,20 +29,18 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.example.otnet.ui.AppDeps
+import com.example.otnet.data.models.PlaybackBlock
 import com.example.otnet.ui.components.PlaceholderKind
 import com.example.otnet.ui.components.StatePlaceholder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 @Composable
 fun PlayerScreen(
     contentId: String,
-    variantIndex: Int,
+    mediaIndex: Int,
     onClose: () -> Unit,
     viewModel: PlayerViewModel = viewModel(),
 ) {
-    LaunchedEffect(contentId, variantIndex) { viewModel.load(contentId, variantIndex) }
+    LaunchedEffect(contentId, mediaIndex) { viewModel.load(contentId, mediaIndex) }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     KeepScreenOn()
@@ -56,11 +54,7 @@ fun PlayerScreen(
         when (val s = state) {
             PlayerUiState.Loading -> StatePlaceholder(PlaceholderKind.Loading)
             is PlayerUiState.Error -> StatePlaceholder(PlaceholderKind.Error(s.message))
-            is PlayerUiState.Ready -> ExoPlayerSurface(
-                contentId = s.content.id,
-                variant = s.variant,
-                variantIndex = s.variantIndex,
-            )
+            is PlayerUiState.Ready -> ExoPlayerSurface(playback = s.playback)
         }
 
         IconButton(
@@ -79,31 +73,21 @@ fun PlayerScreen(
 }
 
 @Composable
-private fun ExoPlayerSurface(
-    contentId: String,
-    variant: com.example.otnet.data.models.MediaVariant,
-    variantIndex: Int,
-) {
+private fun ExoPlayerSurface(playback: PlaybackBlock) {
     val context = LocalContext.current
-    val service = AppDeps.service
     val player = remember {
         ExoPlayer.Builder(context)
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .build()
             .apply {
-                trackSelectionParameters = trackSelectionParameters.buildUpon()
-                    .setPreferredAudioLanguage("en")
-                    .build()
                 repeatMode = Player.REPEAT_MODE_OFF
                 playWhenReady = true
             }
     }
 
-    LaunchedEffect(contentId, variantIndex, variant.entrypoint) {
-        val item = withContext(Dispatchers.IO) {
-            buildMediaItem(service, variant, contentId, variantIndex)
-        }
+    LaunchedEffect(playback.masterUrl, playback.sessionToken) {
+        val item = buildMediaItem(playback)
         player.setMediaItem(item)
         player.seekTo(0, C.TIME_UNSET)
         player.prepare()

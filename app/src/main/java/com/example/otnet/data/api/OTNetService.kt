@@ -3,10 +3,10 @@ package com.example.otnet.data.api
 import com.example.otnet.data.models.ChildrenResponse
 import com.example.otnet.data.models.Content
 import com.example.otnet.data.models.ContentPage
-import com.example.otnet.data.models.DrmSessionRequest
-import com.example.otnet.data.models.DrmSessionResponse
 import com.example.otnet.data.models.GenreNode
 import com.example.otnet.data.models.HomepageResponse
+import com.example.otnet.data.models.VodMintRequest
+import com.example.otnet.data.models.VodMintResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -32,6 +32,6 @@ interface OTNetService {
     @GET("catalog/categories/tree")
     suspend fun categoriesTree(): List<GenreNode>
 
-    @POST("playback/drm/session")
-    suspend fun drmSession(@Body request: DrmSessionRequest): DrmSessionResponse
+    @POST("playback/vod/mint")
+    suspend fun vodMint(@Body request: VodMintRequest): VodMintResponse
 }

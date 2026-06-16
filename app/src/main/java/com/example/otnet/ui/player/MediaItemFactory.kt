@@ -3,24 +3,16 @@ package com.example.otnet.ui.player
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
-import com.example.otnet.data.api.OTNetService
-import com.example.otnet.data.models.DrmSessionRequest
-import com.example.otnet.data.models.MediaVariant
+import com.example.otnet.data.models.PlaybackBlock
 
 /**
- * Build a Media3 [MediaItem] for a variant, transparently minting a session-mode
- * Widevine license token when [variant.drm] is present. Clear-text variants skip
- * the DRM block entirely.
+ * Build a Media3 [MediaItem] from an OTNet `/playback/vod/mint` response.
+ * The mint endpoint hands back both the playable master URL and the
+ * short-lived session JWT used to fetch the Widevine license.
  */
-suspend fun buildMediaItem(
-    service: OTNetService,
-    variant: MediaVariant,
-    contentId: String,
-    mediaIndex: Int = 0,
-): MediaItem {
-    val uri = variant.entrypoint ?: error("Variant has no entrypoint")
-    val mime = when (variant.protocol) {
-        "dash" -> MimeTypes.APPLICATION_MPD
+fun buildMediaItem(playback: PlaybackBlock): MediaItem {
+    val uri = playback.masterUrl ?: error("Playback block has no masterUrl")
+    val mime = when (playback.protocol) {
         "hls" -> MimeTypes.APPLICATION_M3U8
         else -> MimeTypes.APPLICATION_MPD
     }
@@ -29,9 +21,8 @@ suspend fun buildMediaItem(
         .setUri(uri)
         .setMimeType(mime)
 
-    if (variant.drm != null) {
-        val session = service.drmSession(DrmSessionRequest(contentId, mediaIndex))
-        val token = session.token ?: error("DRM session response had no token")
+    val token = playback.sessionToken
+    if (playback.drm != null && !token.isNullOrBlank()) {
         val licenseUrl =
             "https://otnet.io/api/v1/playback/drm/license?token=$token&system=widevine"
 

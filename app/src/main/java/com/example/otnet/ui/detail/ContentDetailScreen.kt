@@ -45,12 +45,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.otnet.data.models.Content
-import com.example.otnet.data.models.MediaVariant
-import com.example.otnet.data.models.allVariants
 import com.example.otnet.data.models.displayTitle
 import com.example.otnet.data.models.heroBackdropUrl
 import com.example.otnet.data.models.isSeries
-import com.example.otnet.data.models.playableVariant
 import com.example.otnet.data.models.posterUrl
 import com.example.otnet.data.models.primaryGenreName
 import com.example.otnet.data.models.runtimeMinutes
@@ -118,8 +115,7 @@ private fun DetailContent(
     onChildTap: (String) -> Unit,
     onPlayChild: (String, Int) -> Unit,
 ) {
-    val variant = selectPreferredVariant(content)
-    val variantIndex = variant?.let { content.allVariants().indexOf(it) }?.coerceAtLeast(0) ?: 0
+    val canPlay = content.media.any { it.variants.isNotEmpty() }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -131,8 +127,8 @@ private fun DetailContent(
                 MetaPills(content)
                 Spacer(Modifier.height(16.dp))
                 ActionRow(
-                    canPlay = variant != null,
-                    onPlay = { onPlay(variantIndex) },
+                    canPlay = canPlay,
+                    onPlay = { onPlay(0) },
                 )
                 content.description?.takeIf { it.isNotBlank() }?.let { desc ->
                     Spacer(Modifier.height(20.dp))
@@ -142,7 +138,7 @@ private fun DetailContent(
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }
-                if (variant == null) {
+                if (!canPlay) {
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = "No playable variant available on this device.",
@@ -341,11 +337,4 @@ private fun EpisodeRow(
         }
     }
     @Suppress("UNUSED_EXPRESSION") onTap
-}
-
-private fun selectPreferredVariant(content: Content): MediaVariant? {
-    val variants = content.allVariants()
-    return variants.firstOrNull { it.protocol == "dash" }
-        ?: variants.firstOrNull { it.protocol == "hls" }
-        ?: content.playableVariant()
 }

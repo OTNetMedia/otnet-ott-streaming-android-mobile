@@ -64,13 +64,23 @@ data class DrmFairplay(
 )
 
 @Serializable
-data class DrmSessionRequest(
+data class VodMintRequest(
     val contentId: String,
+    val protocol: String = "dash",
     val mediaIndex: Int = 0,
 )
 
 @Serializable
-data class DrmSessionResponse(
-    val token: String? = null,
-    val expiresIn: Int = 0,
+data class VodMintResponse(
+    val playback: PlaybackBlock? = null,
+)
+
+@Serializable
+data class PlaybackBlock(
+    val protocol: String? = null,
+    val masterUrl: String? = null,
+    val sessionId: String? = null,
+    val sessionToken: String? = null,
+    val analyticsToken: String? = null,
+    val drm: DrmConfig? = null,
 )
