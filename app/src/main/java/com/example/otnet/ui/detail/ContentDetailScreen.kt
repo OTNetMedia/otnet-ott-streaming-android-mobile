@@ -2,6 +2,9 @@ package com.example.otnet.ui.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -118,6 +124,12 @@ private fun DetailContent(
     onPlayChild: (String, Int) -> Unit,
 ) {
     val canPlay = content.media.any { it.variants.isNotEmpty() }
+    val isSeriesWithSeasons = content.isSeries() &&
+        children.any { it.contentType == "season" }
+    val seasons = if (isSeriesWithSeasons) children else emptyList()
+    var selectedSeasonId by remember(content.id, seasons) {
+        mutableStateOf(seasons.firstOrNull()?.id)
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -150,10 +162,41 @@ private fun DetailContent(
                 }
             }
         }
-        if (children.isNotEmpty()) {
+
+        if (content.personnel.isNotEmpty()) {
+            item("cast") { CastAndCrewRow(personnel = content.personnel) }
+        }
+
+        if (isSeriesWithSeasons) {
+            item("season-tabs") {
+                SeasonTabs(
+                    seasons = seasons,
+                    selectedId = selectedSeasonId,
+                    onSelect = { selectedSeasonId = it },
+                )
+            }
+            item("season-episodes-anchor") {
+                Text(
+                    text = "Episodes",
+                    color = OTNetTextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 12.dp),
+                )
+            }
+            val selected = seasons.firstOrNull { it.id == selectedSeasonId }
+            if (selected != null) {
+                item("season-loader-${selected.id}") {
+                    SeasonEpisodesLoader(
+                        seasonId = selected.id,
+                        onTap = onChildTap,
+                        onPlay = { id -> onPlayChild(id, 0) },
+                    )
+                }
+            }
+        } else if (children.isNotEmpty()) {
             item("episodes-header") {
                 Text(
-                    text = if (content.isSeries()) "Episodes" else "Related",
+                    text = "Episodes",
                     color = OTNetTextPrimary,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 12.dp),
@@ -167,6 +210,76 @@ private fun DetailContent(
                     onPlay = { onPlayChild(children[idx].id, 0) },
                 )
                 Spacer(Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SeasonTabs(
+    seasons: List<Content>,
+    selectedId: String?,
+    onSelect: (String) -> Unit,
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
+    ) {
+        items(seasons, key = { it.id }) { s ->
+            val isSel = s.id == selectedId
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(if (isSel) OTNetTextPrimary else OTNetMuted)
+                    .border(
+                        1.dp,
+                        if (isSel) OTNetTextPrimary else OTNetBorder,
+                        RoundedCornerShape(20.dp),
+                    )
+                    .clickable { onSelect(s.id) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = s.displayTitle(),
+                    color = if (isSel) OTNetBackground else OTNetTextPrimary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SeasonEpisodesLoader(
+    seasonId: String,
+    onTap: (String) -> Unit,
+    onPlay: (String) -> Unit,
+) {
+    val vm: SeasonEpisodesViewModel = viewModel(key = "season-$seasonId")
+    LaunchedEffect(seasonId) { vm.load(seasonId) }
+    val state by vm.state.collectAsStateWithLifecycle()
+    Column(modifier = Modifier.fillMaxWidth()) {
+        when (val s = state) {
+            SeasonEpisodesUiState.Loading -> Text(
+                text = "Loading episodes…",
+                color = OTNetTextTertiary,
+                modifier = Modifier.padding(20.dp),
+            )
+            is SeasonEpisodesUiState.Error -> Text(
+                text = s.message,
+                color = OTNetTextTertiary,
+                modifier = Modifier.padding(20.dp),
+            )
+            is SeasonEpisodesUiState.Data -> {
+                s.items.forEachIndexed { idx, ep ->
+                    EpisodeRow(
+                        episode = ep,
+                        index = idx + 1,
+                        onTap = { onTap(ep.id) },
+                        onPlay = { onPlay(ep.id) },
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
             }
         }
     }

@@ -13,8 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.otnet.data.models.Content
+import com.example.otnet.data.models.DeviceProgressItem
 import com.example.otnet.data.models.HomepageRow
 import com.example.otnet.data.models.primaryGenreName
+import com.example.otnet.ui.ContinueWatchingStore
+import com.example.otnet.ui.components.ContinueWatchingRow
 import com.example.otnet.ui.components.ContentRow
 import com.example.otnet.ui.components.HeroPager
 import com.example.otnet.ui.components.PlaceholderKind
@@ -24,9 +28,11 @@ import com.example.otnet.ui.theme.OTNetBackground
 @Composable
 fun HomeScreen(
     onContentTap: (String) -> Unit,
+    onResume: (String) -> Unit,
     viewModel: HomeViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val continueWatching by ContinueWatchingStore.items.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -41,7 +47,9 @@ fun HomeScreen(
             is HomeUiState.Data -> HomeContent(
                 hero = s.hero,
                 rows = s.rows,
+                continueWatching = continueWatching,
                 onContentTap = onContentTap,
+                onResume = onResume,
             )
         }
     }
@@ -49,13 +57,13 @@ fun HomeScreen(
 
 @Composable
 private fun HomeContent(
-    hero: List<com.example.otnet.data.models.Content>,
+    hero: List<Content>,
     rows: List<HomepageRow>,
+    continueWatching: List<DeviceProgressItem>,
     onContentTap: (String) -> Unit,
+    onResume: (String) -> Unit,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
         item(key = "hero") {
             HeroPager(
                 items = hero,
@@ -64,6 +72,15 @@ private fun HomeContent(
             )
         }
         item(key = "row-gap-top") { Spacer(Modifier.height(8.dp)) }
+        if (continueWatching.isNotEmpty()) {
+            item(key = "continue-watching") {
+                ContinueWatchingRow(
+                    items = continueWatching,
+                    onResume = onResume,
+                )
+                Spacer(Modifier.height(24.dp))
+            }
+        }
         items(rows, key = { row -> row.genre?.id ?: row.genre?.name ?: row.hashCode().toString() }) { row ->
             val title = row.genre?.name
                 ?: row.items.firstOrNull()?.primaryGenreName()

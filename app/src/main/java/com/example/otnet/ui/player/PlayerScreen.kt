@@ -36,11 +36,17 @@ import com.example.otnet.ui.components.StatePlaceholder
 @Composable
 fun PlayerScreen(
     contentId: String,
-    mediaIndex: Int,
+    mediaIndex: Int = 0,
+    isLive: Boolean = false,
+    initialPositionSeconds: Int = 0,
+    onProgressTick: (positionSeconds: Int, durationSeconds: Int) -> Unit = { _, _ -> },
     onClose: () -> Unit,
     viewModel: PlayerViewModel = viewModel(),
 ) {
-    LaunchedEffect(contentId, mediaIndex) { viewModel.load(contentId, mediaIndex) }
+    LaunchedEffect(contentId, mediaIndex, isLive) {
+        if (isLive) viewModel.loadLive(contentId)
+        else viewModel.loadVod(contentId, mediaIndex)
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     KeepScreenOn()
@@ -54,7 +60,12 @@ fun PlayerScreen(
         when (val s = state) {
             PlayerUiState.Loading -> StatePlaceholder(PlaceholderKind.Loading)
             is PlayerUiState.Error -> StatePlaceholder(PlaceholderKind.Error(s.message))
-            is PlayerUiState.Ready -> ExoPlayerSurface(playback = s.playback)
+            is PlayerUiState.Ready -> ExoPlayerSurface(
+                playback = s.playback,
+                isLive = s.isLive,
+                initialPositionSeconds = initialPositionSeconds,
+                onProgressTick = onProgressTick,
+            )
         }
 
         IconButton(
@@ -73,7 +84,12 @@ fun PlayerScreen(
 }
 
 @Composable
-private fun ExoPlayerSurface(playback: PlaybackBlock) {
+private fun ExoPlayerSurface(
+    playback: PlaybackBlock,
+    isLive: Boolean,
+    initialPositionSeconds: Int,
+    onProgressTick: (Int, Int) -> Unit,
+) {
     val context = LocalContext.current
     val player = remember {
         ExoPlayer.Builder(context)
@@ -89,9 +105,25 @@ private fun ExoPlayerSurface(playback: PlaybackBlock) {
     LaunchedEffect(playback.masterUrl, playback.sessionToken) {
         val item = buildMediaItem(playback)
         player.setMediaItem(item)
-        player.seekTo(0, C.TIME_UNSET)
+        val startMs =
+            if (!isLive && initialPositionSeconds > 0) initialPositionSeconds * 1000L
+            else 0L
+        player.seekTo(0, if (startMs > 0) startMs else C.TIME_UNSET)
         player.prepare()
         player.playWhenReady = true
+    }
+
+    if (!isLive) {
+        LaunchedEffect(player) {
+            while (true) {
+                kotlinx.coroutines.delay(10_000)
+                val pos = player.currentPosition
+                val dur = player.duration
+                if (dur > 0 && pos >= 0) {
+                    onProgressTick((pos / 1000).toInt(), (dur / 1000).toInt())
+                }
+            }
+        }
     }
 
     DisposableEffect(player) {

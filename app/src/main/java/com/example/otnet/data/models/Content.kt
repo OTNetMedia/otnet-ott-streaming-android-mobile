@@ -21,6 +21,7 @@ data class Content(
     val landscape: String? = null,
     val backdrop: String? = null,
     val teaser: Teaser? = null,
+    val personnel: List<Personnel> = emptyList(),
 )
 
 @Serializable
@@ -91,6 +92,9 @@ data class VodMintRequest(
 data class VodMintResponse(
     val playback: PlaybackBlock? = null,
 )
+
+@Serializable
+data class LiveMintRequest(val protocol: String = "dash")
 
 @Serializable
 data class PlaybackBlock(
