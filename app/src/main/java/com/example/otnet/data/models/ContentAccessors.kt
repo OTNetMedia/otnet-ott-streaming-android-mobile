@@ -2,15 +2,24 @@ package com.example.otnet.data.models
 
 fun Content.displayTitle(): String = title ?: "Untitled"
 
-fun Content.posterUrl(): String? = media.firstOrNull()?.portrait
+private fun String?.nonBlank(): String? = this?.takeIf { it.isNotBlank() }
+
+fun Content.posterUrl(): String? =
+    portrait.nonBlank()
+        ?: media.firstOrNull()?.portrait.nonBlank()
 
 fun Content.landscapeUrl(): String? =
-    media.firstOrNull()?.landscape ?: media.firstOrNull()?.backdrop
+    landscape.nonBlank()
+        ?: media.firstOrNull()?.landscape.nonBlank()
+        ?: media.firstOrNull()?.backdrop.nonBlank()
 
 fun Content.heroBackdropUrl(): String? =
-    media.firstOrNull()?.backdrop
-        ?: media.firstOrNull()?.landscape
-        ?: media.firstOrNull()?.portrait
+    backdrop.nonBlank()
+        ?: landscape.nonBlank()
+        ?: media.firstOrNull()?.backdrop.nonBlank()
+        ?: media.firstOrNull()?.landscape.nonBlank()
+        ?: portrait.nonBlank()
+        ?: media.firstOrNull()?.portrait.nonBlank()
 
 fun Content.isSeries(): Boolean = contentType == "series" || childCount > 0
 
@@ -31,3 +40,13 @@ fun Content.runtimeMinutes(): Int? {
     val seconds = media.firstOrNull()?.variants?.firstOrNull()?.duration ?: return null
     return (seconds / 60).takeIf { it > 0 }
 }
+
+fun Content.teaserDashUrl(): String? =
+    teaser?.variants?.firstOrNull { it.protocol == "dash" }?.entrypoint.nonBlank()
+
+fun Content.teaserHlsUrl(): String? =
+    teaser?.variants?.firstOrNull { it.protocol == "hls" }?.entrypoint.nonBlank()
+
+fun Content.teaserPlaybackUrl(): String? = teaserDashUrl() ?: teaserHlsUrl()
+
+fun Content.hasTeaser(): Boolean = teaserPlaybackUrl() != null

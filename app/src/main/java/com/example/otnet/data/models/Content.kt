@@ -16,6 +16,23 @@ data class Content(
     val sortOrder: Int? = null,
     val parent: ParentRef? = null,
     val genres: List<GenreRef> = emptyList(),
+    // New top-level art fields (alongside the per-media fallbacks)
+    val portrait: String? = null,
+    val landscape: String? = null,
+    val backdrop: String? = null,
+    val teaser: Teaser? = null,
+)
+
+@Serializable
+data class Teaser(
+    val resources: TeaserResources? = null,
+    val variants: List<MediaVariant> = emptyList(),
+    val duration: Int? = null,
+)
+
+@Serializable
+data class TeaserResources(
+    val poster: String? = null,
 )
 
 @Serializable

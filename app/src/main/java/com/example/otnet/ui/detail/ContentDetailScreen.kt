@@ -51,9 +51,11 @@ import com.example.otnet.data.models.isSeries
 import com.example.otnet.data.models.posterUrl
 import com.example.otnet.data.models.primaryGenreName
 import com.example.otnet.data.models.runtimeMinutes
-import com.example.otnet.ui.components.LandscapeCard
+import com.example.otnet.data.models.teaserDashUrl
+import com.example.otnet.data.models.teaserPlaybackUrl
 import com.example.otnet.ui.components.PlaceholderKind
 import com.example.otnet.ui.components.StatePlaceholder
+import com.example.otnet.ui.components.TeaserPlayer
 import com.example.otnet.ui.theme.OTNetBackground
 import com.example.otnet.ui.theme.OTNetBorder
 import com.example.otnet.ui.theme.OTNetMuted
@@ -173,12 +175,22 @@ private fun DetailContent(
 @Composable
 private fun DetailHero(content: Content) {
     Box(modifier = Modifier.fillMaxWidth().height(420.dp)) {
-        AsyncImage(
-            model = content.heroBackdropUrl(),
-            contentDescription = content.displayTitle(),
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
+        val teaserUrl = content.teaserPlaybackUrl()
+        if (teaserUrl != null) {
+            TeaserPlayer(
+                teaserUrl = teaserUrl,
+                isDash = content.teaserDashUrl() != null,
+                fallbackImage = content.heroBackdropUrl(),
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            AsyncImage(
+                model = content.heroBackdropUrl(),
+                contentDescription = content.displayTitle(),
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
