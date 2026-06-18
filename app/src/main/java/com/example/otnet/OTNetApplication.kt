@@ -5,7 +5,6 @@ import com.example.otnet.data.api.NetworkModule
 import com.example.otnet.ui.AppDeps
 import com.example.otnet.ui.ContinueWatchingStore
 import com.example.otnet.ui.DeviceStore
-import com.example.otnet.ui.ProfileStore
 import com.example.otnet.ui.SettingsStore
 
 class OTNetApplication : Application() {
@@ -16,10 +15,7 @@ class OTNetApplication : Application() {
             "OTNET_API_KEY is missing. Copy local.properties.example to local.properties " +
                 "and set OTNET_API_KEY=<your publisher key>."
         }
-        val service = NetworkModule.provideService(
-            apiKey = key,
-            profileIndexProvider = { ProfileStore.index.value },
-        )
+        val service = NetworkModule.provideService(key)
         AppDeps.service = service
         SettingsStore.refresh(service)
         DeviceStore.hello(this, service)
