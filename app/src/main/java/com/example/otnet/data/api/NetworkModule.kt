@@ -10,7 +10,10 @@ import retrofit2.Retrofit
 object NetworkModule {
     private const val BASE_URL = "https://otnet.io/api/v1/"
 
-    fun provideService(apiKey: String): OTNetService {
+    fun provideService(
+        apiKey: String,
+        profileIndexProvider: () -> Int = { 0 },
+    ): OTNetService {
         require(apiKey.isNotEmpty()) { "OTNet API key is required" }
 
         val json = Json {
@@ -25,6 +28,7 @@ object NetworkModule {
 
         val client = OkHttpClient.Builder()
             .addInterceptor(ApiKeyInterceptor(apiKey))
+            .addInterceptor(ProfileIndexInterceptor(profileIndexProvider))
             .addInterceptor(logging)
             .build()
 
